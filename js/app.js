@@ -1,5 +1,4 @@
 // logica principal do portal conexao solidaria
-// foco em baixo letramento digital, feedback claro e prevencao de erros
 
 (function () {
   "use strict";
@@ -10,8 +9,7 @@
     userLocation: null, // { lat, lng, label, isGps }
     onlyOpen: false,
     selectedPlaceId: null,
-    simulatedHour: "real",
-    fontLarge: false,
+    customMinutes: null, // null = horario real; numero de 0 a 1439 = minutos desde 00:00
     themeIndex: 0 // 0: default, 1: dark, 2: yellow
   };
 
@@ -21,7 +19,6 @@
     { className: "theme-yellow", label: "Amarelo", announce: "Modo alto contraste amarelo e preto ativado." }
   ];
 
-  // referencias de elementos
   const screens = {
     home: document.getElementById("screen-home"),
     location: document.getElementById("screen-location"),
@@ -31,10 +28,12 @@
 
   const statusLive = document.getElementById("status-live");
   const btnHomeLogo = document.getElementById("btn-home-logo");
-  const btnFontSize = document.getElementById("btn-font-size");
   const btnContrast = document.getElementById("btn-contrast");
   const contrastLabel = document.getElementById("contrast-label");
-  const timeSimulator = document.getElementById("time-simulator");
+
+  const customTimeInput = document.getElementById("custom-time-input");
+  const btnResetTime = document.getElementById("btn-reset-time");
+  const timeStatusHint = document.getElementById("time-status-hint");
 
   const locSelectedCategory = document.getElementById("loc-selected-category");
   const btnUseGps = document.getElementById("btn-use-gps");
@@ -61,13 +60,16 @@
   const btnOpenMaps = document.getElementById("btn-open-maps");
   const btnReadAloud = document.getElementById("btn-read-aloud");
   const btnReadAloudLabel = document.getElementById("btn-read-aloud-label");
+  const audioFeedback = document.getElementById("audio-feedback");
   const detailAddress = document.getElementById("detail-address");
   const detailReference = document.getElementById("detail-reference");
   const detailHours = document.getElementById("detail-hours");
   const detailServices = document.getElementById("detail-services");
   const detailDocs = document.getElementById("detail-docs");
 
-  // anuncia mudancas importantes para leitores de tela
+  let isSpeaking = false;
+  let speechKeepAliveTimer = null;
+
   function announce(message) {
     statusLive.textContent = "";
     window.setTimeout(function () {
@@ -75,14 +77,9 @@
     }, 50);
   }
 
-  // carrega preferencias de acessibilidade salvas
   function loadPreferences() {
     try {
-      const savedFont = localStorage.getItem("pcs_font_large");
       const savedTheme = localStorage.getItem("pcs_theme_index");
-      if (savedFont === "true") {
-        state.fontLarge = true;
-      }
       if (savedTheme !== null) {
         const parsed = parseInt(savedTheme, 10);
         if (!isNaN(parsed) && parsed >= 0 && parsed < THEMES.length) {
@@ -90,25 +87,20 @@
         }
       }
     } catch (e) {
-      // ignora erro se o navegador bloquear localstorage
+      // ignora erro de armazenamento
     }
-    applyAccessibility();
+    applyTheme();
   }
 
   function savePreferences() {
     try {
-      localStorage.setItem("pcs_font_large", String(state.fontLarge));
       localStorage.setItem("pcs_theme_index", String(state.themeIndex));
     } catch (e) {
-      // ignora erro se o navegador bloquear localstorage
+      // ignora erro de armazenamento
     }
   }
 
-  function applyAccessibility() {
-    document.body.classList.toggle("font-large", state.fontLarge);
-    document.body.classList.toggle("font-normal", !state.fontLarge);
-    btnFontSize.setAttribute("aria-pressed", String(state.fontLarge));
-
+  function applyTheme() {
     THEMES.forEach(function (t) {
       document.body.classList.remove(t.className);
     });
@@ -117,17 +109,168 @@
     contrastLabel.textContent = currentTheme.label;
   }
 
-  // interrompe leitura em voz alta se estiver ativa
-  function stopSpeech() {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
+  // --- audio / leitura em voz alta (compatibilidade mobile + desktop) ---
+  function clearSpeechTimer() {
+    if (speechKeepAliveTimer !== null) {
+      window.clearInterval(speechKeepAliveTimer);
+      speechKeepAliveTimer = null;
     }
   }
 
-  // troca de tela com foco acessivel no topo
+  function stopSpeech() {
+    clearSpeechTimer();
+    isSpeaking = false;
+    btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        // ignora erro em navegadores restritos
+      }
+    }
+  }
+
+  function setAudioFeedback(msg, isError) {
+    if (!msg) {
+      audioFeedback.hidden = true;
+      audioFeedback.textContent = "";
+      return;
+    }
+    audioFeedback.hidden = false;
+    audioFeedback.textContent = msg;
+    audioFeedback.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function pickPortugueseVoice(voices) {
+    if (!voices || !voices.length) return null;
+    const ptBr = voices.find(function (v) {
+      return v.lang && v.lang.toLowerCase().replace("_", "-") === "pt-br";
+    });
+    if (ptBr) return ptBr;
+    return voices.find(function (v) {
+      return v.lang && v.lang.toLowerCase().startsWith("pt");
+    }) || null;
+  }
+
+  function toggleReadAloud() {
+    setAudioFeedback("", false);
+
+    if (!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance === "undefined") {
+      setAudioFeedback("Seu aparelho não suporta leitura por voz neste navegador.", true);
+      return;
+    }
+
+    if (isSpeaking || window.speechSynthesis.speaking) {
+      stopSpeech();
+      return;
+    }
+
+    const place = SUPPORT_PLACES.find(function (p) { return p.id === state.selectedPlaceId; });
+    if (!place) return;
+
+    const openStatus = isPlaceOpen(place) ? "Este local está aberto agora." : "Atenção: este local está fechado agora.";
+    const text =
+      place.name + ". " +
+      openStatus + " " +
+      "Endereço: " + place.address + ". " +
+      "Horário: " + place.hoursText + ". " +
+      "Documentos: " + place.documents;
+
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {
+      // ignora erro inicial
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "pt-BR";
+    utterance.rate = 0.96;
+
+    const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+    const chosenVoice = pickPortugueseVoice(voices);
+    if (chosenVoice) {
+      utterance.voice = chosenVoice;
+    }
+
+    let started = false;
+
+    utterance.onstart = function () {
+      started = true;
+      isSpeaking = true;
+      btnReadAloudLabel.textContent = "Parar áudio";
+      setAudioFeedback("Reproduzindo em voz alta...", false);
+    };
+
+    utterance.onend = function () {
+      clearSpeechTimer();
+      isSpeaking = false;
+      btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
+      setAudioFeedback("", false);
+    };
+
+    utterance.onerror = function (ev) {
+      clearSpeechTimer();
+      isSpeaking = false;
+      btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
+      // em alguns celulares android/ios o cancelamento dispara "interrupted" ou "canceled"
+      if (ev && (ev.error === "interrupted" || ev.error === "canceled")) {
+        setAudioFeedback("", false);
+        return;
+      }
+      setAudioFeedback("Não foi possível tocar o áudio neste celular. Verifique o volume ou a voz em português do aparelho.", true);
+    };
+
+    btnReadAloudLabel.textContent = "Parar áudio";
+    isSpeaking = true;
+
+    window.setTimeout(function () {
+      try {
+        window.speechSynthesis.speak(utterance);
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch (err) {
+        stopSpeech();
+        setAudioFeedback("Não foi possível iniciar o áudio neste navegador.", true);
+        return;
+      }
+
+      // workaround para navegadores moveis que pausam utterances longas
+      speechKeepAliveTimer = window.setInterval(function () {
+        if (!isSpeaking) {
+          clearSpeechTimer();
+          return;
+        }
+        try {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+        } catch (e) {
+          // ignora
+        }
+      }, 4000);
+
+      // verifica se o dispositivo realmente aceitou a fala apos 1.4s
+      window.setTimeout(function () {
+        if (isSpeaking && !started && !window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          stopSpeech();
+          setAudioFeedback("A voz em português não respondeu neste celular. Ative a Síntese de Fala (TTS) nas configurações do aparelho.", true);
+        }
+      }, 1400);
+    }, 40);
+  }
+
+  // garante carregamento tardio de vozes em chrome / android
+  if ("speechSynthesis" in window && typeof window.speechSynthesis.addEventListener === "function") {
+    window.speechSynthesis.addEventListener("voiceschanged", function () {
+      // vozes atualizadas pelo sistema
+    });
+  }
+
+  // --- navegacao entre telas ---
   function showScreen(screenName, pushHistory) {
     stopSpeech();
+    setAudioFeedback("", false);
     state.screen = screenName;
 
     Object.keys(screens).forEach(function (key) {
@@ -143,13 +286,13 @@
       try {
         history.pushState({ screen: screenName, category: state.category, placeId: state.selectedPlaceId }, "", "#" + screenName);
       } catch (e) {
-        // segue normalmente se history api nao estiver disponivel
+        // segue normalmente
       }
     }
   }
 
-  // formula de haversine para distancia real em quilometros
-  function calculateDistanceKm(lat1, lng1, lat2, lng2) {
+  // --- distancia e estimativa de rota a pe calibrada para vias urbanas de sp ---
+  function calculateStraightKm(lat1, lng1, lat2, lng2) {
     const toRad = function (deg) {
       return (deg * Math.PI) / 180;
     };
@@ -164,50 +307,143 @@
     return earthRadiusKm * c;
   }
 
-  function formatDistance(km) {
-    if (km < 1) {
-      const meters = Math.max(50, Math.round((km * 1000) / 10) * 10);
-      return meters + " metros de distância";
-    }
-    return km.toFixed(1).replace(".", ",") + " km de distância";
+  // fator urbano de ruas/quadras para aproximar melhor a distancia real de caminhada do maps
+  function estimateWalkingKm(straightKm) {
+    const roadFactor = straightKm < 0.8 ? 1.22 : (straightKm < 3 ? 1.28 : 1.32);
+    return straightKm * roadFactor;
   }
 
-  function formatWalkTime(km) {
-    // velocidade media a pe considerando trajeto urbano (~4 km/h)
-    const minutes = Math.max(2, Math.round((km / 4) * 60));
+  function formatDistance(walkKm) {
+    if (walkKm < 1) {
+      const meters = Math.max(50, Math.round((walkKm * 1000) / 10) * 10);
+      return "~" + meters + " m a pé";
+    }
+    return "~" + walkKm.toFixed(1).replace(".", ",") + " km a pé";
+  }
+
+  function formatWalkTime(walkKm) {
+    // ritmo real de caminhada urbana (~4,5 km/h -> ~13,3 min por km)
+    const minutes = Math.max(1, Math.round((walkKm / 4.5) * 60));
     if (minutes < 60) {
-      return "Cerca de " + minutes + " min a pé";
+      return "~" + minutes + " min";
     }
     const hours = Math.floor(minutes / 60);
     const rem = minutes % 60;
     if (rem === 0) {
-      return "Cerca de " + hours + "h a pé (ou transporte público)";
+      return "~" + hours + "h";
     }
-    return "Cerca de " + hours + "h e " + rem + " min a pé (ou ônibus/metrô)";
+    return "~" + hours + "h " + rem + " min";
   }
 
-  // verifica se o local esta aberto considerando horario real ou simulado
-  function isPlaceOpen(place) {
-    const now = new Date();
-    let hour = now.getHours();
-    let day = now.getDay();
+  function buildMapsWalkingUrl(origin, place) {
+    const destination = encodeURIComponent(place.address);
+    if (origin && origin.isGps && typeof origin.lat === "number" && typeof origin.lng === "number") {
+      return (
+        "https://www.google.com/maps/dir/?api=1" +
+        "&origin=" + origin.lat + "," + origin.lng +
+        "&destination=" + destination +
+        "&travelmode=walking"
+      );
+    }
+    return (
+      "https://www.google.com/maps/dir/?api=1" +
+      "&destination=" + destination +
+      "&travelmode=walking"
+    );
+  }
 
-    if (state.simulatedHour !== "real") {
-      hour = parseInt(state.simulatedHour, 10);
-      // na simulacao de apresentacao usa dia util (quarta-feira) para demonstrar abertura
-      day = 3;
+  // --- horario valido (somente numeros de hora 00-23 e minuto 00-59) ---
+  function parseValidTimeToMinutes(rawValue) {
+    if (!rawValue) return null;
+    const cleaned = String(rawValue).replace(/\D/g, "");
+    if (cleaned.length !== 4) return null;
+
+    const hh = parseInt(cleaned.slice(0, 2), 10);
+    const mm = parseInt(cleaned.slice(2, 4), 10);
+
+    if (isNaN(hh) || isNaN(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+      return null;
     }
 
+    return hh * 60 + mm;
+  }
+
+  function formatMinutesAsHHMM(totalMinutes) {
+    const hh = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+    const mm = String(totalMinutes % 60).padStart(2, "0");
+    return hh + ":" + mm;
+  }
+
+  function getActiveHourAndDay() {
+    const now = new Date();
+    if (state.customMinutes === null) {
+      return {
+        hour: now.getHours() + now.getMinutes() / 60,
+        day: now.getDay()
+      };
+    }
+    return {
+      hour: state.customMinutes / 60,
+      day: now.getDay()
+    };
+  }
+
+  function isPlaceOpen(place) {
     if (place.openHour === 0 && place.closeHour === 24) {
       return true;
     }
 
-    const dayMatches = place.days.indexOf(day) !== -1;
-    const hourMatches = hour >= place.openHour && hour < place.closeHour;
+    const active = getActiveHourAndDay();
+    const dayMatches = place.days.indexOf(active.day) !== -1;
+    const hourMatches = active.hour >= place.openHour && active.hour < place.closeHour;
     return dayMatches && hourMatches;
   }
 
-  // abre a tela de localizacao ou vai direto para os resultados se ja tiver localizacao
+  function applyCustomTimeInput() {
+    const raw = customTimeInput.value.trim();
+
+    if (raw === "") {
+      state.customMinutes = null;
+      customTimeInput.classList.remove("is-invalid");
+      timeStatusHint.textContent = "Agora";
+      refreshCurrentView();
+      return;
+    }
+
+    const parsedMinutes = parseValidTimeToMinutes(raw);
+    if (parsedMinutes === null) {
+      customTimeInput.classList.add("is-invalid");
+      timeStatusHint.textContent = "Use 00:00 a 23:59";
+      return;
+    }
+
+    state.customMinutes = parsedMinutes;
+    const formatted = formatMinutesAsHHMM(parsedMinutes);
+    customTimeInput.value = formatted;
+    customTimeInput.classList.remove("is-invalid");
+    timeStatusHint.textContent = "Simulando " + formatted;
+    refreshCurrentView();
+    announce("Horário ajustado para " + formatted);
+  }
+
+  function resetToRealTime() {
+    state.customMinutes = null;
+    customTimeInput.value = "";
+    customTimeInput.classList.remove("is-invalid");
+    timeStatusHint.textContent = "Agora";
+    refreshCurrentView();
+    announce("Voltando para o horário real.");
+  }
+
+  function refreshCurrentView() {
+    if (state.screen === "results") {
+      renderResults();
+    } else if (state.screen === "details" && state.selectedPlaceId) {
+      openPlaceDetails(state.selectedPlaceId, false);
+    }
+  }
+
+  // --- fluxo das telas ---
   function handleCategorySelect(categoryId) {
     state.category = categoryId;
     state.onlyOpen = false;
@@ -227,7 +463,6 @@
     }
   }
 
-  // solicita geolocalizacao real do dispositivo
   function requestGpsLocation() {
     if (!("geolocation" in navigator)) {
       showGpsError("Seu aparelho não possui localização automática disponível. Escolha sua região na lista abaixo.");
@@ -261,9 +496,9 @@
         showGpsError(msg);
       },
       {
-        enableHighAccuracy: false,
-        timeout: 9000,
-        maximumAge: 300000
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
       }
     );
   }
@@ -295,7 +530,6 @@
     filterOpen.setAttribute("aria-pressed", String(state.onlyOpen));
   }
 
-  // monta a lista ordenada por proximidade
   function renderResults() {
     if (!state.category || !state.userLocation) return;
 
@@ -308,20 +542,21 @@
         return place.categories.indexOf(state.category) !== -1;
       })
       .map(function (place) {
-        const dist = calculateDistanceKm(
+        const straightKm = calculateStraightKm(
           state.userLocation.lat,
           state.userLocation.lng,
           place.lat,
           place.lng
         );
+        const walkKm = estimateWalkingKm(straightKm);
         return {
           place: place,
-          distanceKm: dist,
+          walkKm: walkKm,
           openNow: isPlaceOpen(place)
         };
       })
       .sort(function (a, b) {
-        return a.distanceKm - b.distanceKm;
+        return a.walkKm - b.walkKm;
       });
 
     const visibleItems = state.onlyOpen
@@ -357,8 +592,8 @@
         '</div>' +
         '<h2 class="place-name">' + escapeHtml(item.place.name) + '</h2>' +
         '<div class="place-distance-row">' +
-          '<span>📍 ' + formatDistance(item.distanceKm) + '</span>' +
-          '<span>· ' + formatWalkTime(item.distanceKm) + '</span>' +
+          '<span>📍 ' + formatDistance(item.walkKm) + '</span>' +
+          '<span>· ' + formatWalkTime(item.walkKm) + '</span>' +
         '</div>' +
         '<p class="place-address">' + escapeHtml(item.place.address) + '</p>' +
         '<div class="place-cta">' +
@@ -367,26 +602,26 @@
         '</div>';
 
       card.addEventListener("click", function () {
-        openPlaceDetails(item.place.id);
+        openPlaceDetails(item.place.id, true);
       });
 
       resultsList.appendChild(card);
     });
   }
 
-  // abre a tela de detalhes do ponto selecionado
   function openPlaceDetails(placeId, pushHistory) {
     const place = SUPPORT_PLACES.find(function (p) { return p.id === placeId; });
     if (!place || !state.userLocation) return;
 
     state.selectedPlaceId = placeId;
     const openNow = isPlaceOpen(place);
-    const distKm = calculateDistanceKm(
+    const straightKm = calculateStraightKm(
       state.userLocation.lat,
       state.userLocation.lng,
       place.lat,
       place.lng
     );
+    const walkKm = estimateWalkingKm(straightKm);
 
     detailStatusBadge.className = "status-badge " + (openNow ? "status-open" : "status-closed");
     detailStatusBadge.textContent = openNow ? "● ABERTO AGORA" : "● FECHADO AGORA";
@@ -400,14 +635,13 @@
       detailClosedWarning.hidden = true;
     }
 
-    detailDistance.textContent = "📍 " + formatDistance(distKm);
-    detailWalk.textContent = formatWalkTime(distKm);
+    detailDistance.textContent = "📍 " + formatDistance(walkKm);
+    detailWalk.textContent = formatWalkTime(walkKm);
 
     btnCallNow.href = "tel:" + place.phone;
     detailPhoneDisplay.textContent = place.phoneDisplay + " — toca direto no seu celular";
 
-    const destinationQuery = encodeURIComponent(place.name + ", " + place.address);
-    btnOpenMaps.href = "https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=" + destinationQuery;
+    btnOpenMaps.href = buildMapsWalkingUrl(state.userLocation, place);
 
     detailAddress.textContent = place.address;
     detailReference.textContent = "Referência: " + place.reference;
@@ -422,48 +656,8 @@
 
     detailDocs.textContent = place.documents;
 
-    // exibe botao de leitura em voz alta apenas se o navegador suportar
-    if ("speechSynthesis" in window) {
-      btnReadAloud.hidden = false;
-      btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
-    } else {
-      btnReadAloud.hidden = true;
-    }
-
     showScreen("details", pushHistory);
     announce("Detalhes de " + place.name + ". " + (openNow ? "Aberto agora." : "Atenção: fechado agora."));
-  }
-
-  // leitura em voz alta acessivel das informacoes principais do local
-  function toggleReadAloud() {
-    if (!("speechSynthesis" in window)) return;
-    if (window.speechSynthesis.speaking) {
-      stopSpeech();
-      return;
-    }
-    const place = SUPPORT_PLACES.find(function (p) { return p.id === state.selectedPlaceId; });
-    if (!place) return;
-
-    const openStatus = isPlaceOpen(place) ? "Este local está aberto agora." : "Atenção: este local está fechado agora.";
-    const text =
-      place.name + ". " +
-      openStatus + " " +
-      "Endereço: " + place.address + ". " +
-      "Horário: " + place.hoursText + ". " +
-      "Documentos: " + place.documents;
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "pt-BR";
-    utterance.rate = 0.95;
-    utterance.onend = function () {
-      btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
-    };
-    utterance.onerror = function () {
-      btnReadAloudLabel.textContent = "Ouvir informações em voz alta";
-    };
-
-    btnReadAloudLabel.textContent = "Parar leitura em voz alta";
-    window.speechSynthesis.speak(utterance);
   }
 
   function escapeHtml(text) {
@@ -474,25 +668,45 @@
       .replace(/"/g, "&quot;");
   }
 
-  // vincula eventos de interface
   function bindEvents() {
     btnHomeLogo.addEventListener("click", function () {
       showScreen("home");
     });
 
-    btnFontSize.addEventListener("click", function () {
-      state.fontLarge = !state.fontLarge;
-      applyAccessibility();
-      savePreferences();
-      announce(state.fontLarge ? "Tamanho da letra aumentado." : "Tamanho da letra padrão.");
-    });
-
     btnContrast.addEventListener("click", function () {
       state.themeIndex = (state.themeIndex + 1) % THEMES.length;
-      applyAccessibility();
+      applyTheme();
       savePreferences();
       announce(THEMES[state.themeIndex].announce);
     });
+
+    // permite apenas digitos e colon (:) durante a digitacao e formata HH:MM ao sair ou apertar Enter
+    customTimeInput.addEventListener("input", function () {
+      let digits = customTimeInput.value.replace(/\D/g, "").slice(0, 4);
+      if (digits.length > 2) {
+        digits = digits.slice(0, 2) + ":" + digits.slice(2);
+      }
+      customTimeInput.value = digits;
+      customTimeInput.classList.remove("is-invalid");
+
+      if (digits === "") {
+        state.customMinutes = null;
+        timeStatusHint.textContent = "Agora";
+        refreshCurrentView();
+      } else if (digits.length === 5) {
+        applyCustomTimeInput();
+      }
+    });
+
+    customTimeInput.addEventListener("change", applyCustomTimeInput);
+    customTimeInput.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        applyCustomTimeInput();
+      }
+    });
+
+    btnResetTime.addEventListener("click", resetToRealTime);
 
     document.querySelectorAll(".cat-card").forEach(function (card) {
       card.addEventListener("click", function () {
@@ -549,17 +763,6 @@
 
     btnReadAloud.addEventListener("click", toggleReadAloud);
 
-    timeSimulator.addEventListener("change", function () {
-      state.simulatedHour = timeSimulator.value;
-      if (state.screen === "results") {
-        renderResults();
-      } else if (state.screen === "details" && state.selectedPlaceId) {
-        openPlaceDetails(state.selectedPlaceId, false);
-      }
-      announce("Horário de simulação atualizado.");
-    });
-
-    // suporte ao botao voltar nativo do celular e navegador
     window.addEventListener("popstate", function (event) {
       if (event.state && event.state.screen) {
         const target = event.state.screen;
