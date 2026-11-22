@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portal Conexao Solidaria - Encontre alimentacao, moradia, saude, documentacao, vestuario e apoio social gratuitos perto de voce.">
+  <meta name="theme-color" content="#0f5132">
+  <title>Portal Conexão Solidária</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-default font-normal">
+  <!-- link de pulo para acessibilidade via teclado e leitores de tela -->
+  <a href="#main-content" class="skip-link">Ir direto para o conteúdo principal</a>
+
+  <!-- barra superior fixa com identidade e controles de acessibilidade -->
+  <header class="top-bar" role="banner">
+    <div class="top-bar-inner">
+      <button type="button" id="btn-home-logo" class="brand-button" aria-label="Voltar para a página inicial do Portal Conexão Solidária">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21s-7-4.35-9.33-8.28C.95 9.8 2.64 6 6.2 6c2.04 0 3.41 1.07 4.3 2.35C11.39 7.07 12.76 6 14.8 6c3.56 0 5.25 3.8 3.53 6.72C19 16.65 12 21 12 21z"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <strong>Conexão Solidária</strong>
+          <small>Ajuda gratuita perto de você</small>
+        </span>
+      </button>
+
+      <div class="a11y-controls" role="group" aria-label="Opções de leitura e visualização">
+        <button type="button" id="btn-font-size" class="a11y-btn" aria-pressed="false" aria-label="Aumentar tamanho das letras">
+          <span aria-hidden="true">A+</span>
+          <span class="a11y-label">Letra</span>
+        </button>
+        <button type="button" id="btn-contrast" class="a11y-btn" aria-label="Trocar modo de contraste da tela">
+          <span aria-hidden="true">◐</span>
+          <span class="a11y-label" id="contrast-label">Contraste</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- regiao de avisos para leitores de tela e feedback imediato -->
+  <div id="status-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- conteudo principal com troca de telas -->
+  <main id="main-content" class="app-container" role="main">
+
+    <!-- tela 1: pagina inicial (home) -->
+    <section id="screen-home" class="screen screen-active" aria-labelledby="home-title">
+      <div class="hero-card">
+        <h1 id="home-title">Encontre Apoio Perto de Você</h1>
+        <p class="hero-subtitle">Do que você precisa hoje? Toque em uma opção abaixo. Não precisa fazer cadastro.</p>
+      </div>
+
+      <div class="category-grid" role="list" aria-label="Categorias de ajuda gratuita">
+        <button type="button" class="cat-card cat-alimentacao" data-category="alimentacao" role="listitem">
+          <span class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12h18"/>
+              <path d="M5 12a7 7 0 0 0 14 0"/>
+              <path d="M8 7c0-1.5 1-2.5 1-4"/>
+              <path d="M12 7c0-1.5 1-2.5 1-4"/>
+              <path d="M16 7c0-1.5 1-2.5 1-4"/>
+              <path d="M7 20h10"/>
+            </svg>
+          </span>
+          <span class="cat-title">Alimentação</span>
+          <span class="cat-desc">Refeição gratuita, Bom Prato e cestas</span>
+        </button>
+
+        <button type="button" class="cat-card cat-moradia" data-category="moradia" role="listitem">
+          <span class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 10.5L12 3l9 7.5"/>
+              <path d="M5 9.5V20h14V9.5"/>
+              <path d="M9 20v-6h6v6"/>
+            </svg>
+          </span>
+          <span class="cat-title">Moradia e Abrigo</span>
+          <span class="cat-desc">Local para dormir, banho e acolhimento</span>
+        </button>
+
+        <button type="button" class="cat-card cat-documentacao" data-category="documentacao" role="listitem">
+          <span class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <circle cx="9" cy="10" r="2"/>
+              <path d="M6 16c.5-1.6 1.7-2.5 3-2.5s2.5.9 3 2.5"/>
+              <path d="M14 9h4"/>
+              <path d="M14 13h4"/>
+            </svg>
+          </span>
+          <span class="cat-title">Documentação</span>
+          <span class="cat-desc">RG, CPF, CadÚnico e segunda via</span>
+        </button>
+
+        <button type="button" class="cat-card cat-saude" data-category="saude" role="listitem">
+          <span class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="3"/>
+              <path d="M12 7v10"/>
+              <path d="M7 12h10"/>
+            </svg>
+          </span>
+          <span class="cat-title">Saúde</span>
+          <span class="cat-desc">Postos UBS, consultas e remédios</span>
+        </button>
+
+        <button type="button" class="cat-card cat-vestuario" data-category="vestuario" role="listitem">
+          <span class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 4l-5 3 2 4 3-1v10h8V10l3 1 2-4-5-3-2 2h-4L8 4z"/>
+            </svg>
+          </span>
+          <span class="cat-title">Vestuário</span>
+          <span class="cat-desc">Doação de roupas, calçados e cobertores</span>
+        </button>
+
+        <button type="button" class="cat-card cat-apoio" data-category="apoio" role="listitem">
+          <span class="cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 11a3 3 0 1 0-6 0"/>
+              <path d="M6 12a2.5 2.5 0 1 0-2.5-2.5"/>
+              <path d="M18 12a2.5 2.5 0 1 0 2.5-2.5"/>
+              <path d="M3 20c0-2.5 2-4 4.5-4"/>
+              <path d="M21 20c0-2.5-2-4-4.5-4"/>
+              <path d="M7 20c0-3 2.5-5 6-5s6 2 6 5"/>
+            </svg>
+          </span>
+          <span class="cat-title">Apoio Social</span>
+          <span class="cat-desc">CRAS, CREAS, benefícios e orientação</span>
+        </button>
+      </div>
+
+      <div class="trust-box" role="note">
+        <p><strong>100% gratuito e seguro:</strong> você não precisa digitar senhas nem criar conta. Toque na ajuda que precisa para ver os locais mais perto de você.</p>
+      </div>
+    </section>
+
+    <!-- tela 2: permissao de localizacao amigavel -->
+    <section id="screen-location" class="screen" aria-labelledby="location-title" hidden>
+      <div class="nav-row">
+        <button type="button" class="btn-back" data-action="go-home">
+          <span aria-hidden="true">←</span> Voltar ao início
+        </button>
+      </div>
+
+      <div class="location-card">
+        <div class="selected-pill" id="loc-selected-category">Categoria selecionada</div>
+        <h1 id="location-title">Onde você está agora?</h1>
+        <p class="location-text">
+          Precisamos saber sua região para mostrar os locais <strong>mais perto para ir a pé</strong>.
+        </p>
+
+        <div class="privacy-note">
+          <span aria-hidden="true">🔒</span>
+          <span>Fique tranquilo(a): nada fica salvo no seu celular.</span>
+        </div>
+
+        <button type="button" id="btn-use-gps" class="btn-primary btn-huge">
+          <span aria-hidden="true">📍</span>
+          <span>Usar minha localização automática (GPS)</span>
+        </button>
+
+        <div id="gps-feedback" class="feedback-box" role="alert" hidden></div>
+
+        <div class="divider-text"><span>Ou escolha sua região de São Paulo</span></div>
+
+        <div class="region-grid" role="group" aria-label="Escolher região de São Paulo">
+          <button type="button" class="btn-region" data-region="zona_leste">
+            <strong>Zona Leste</strong>
+            <small>Itaquera, São Mateus, Penha, Tatuapé</small>
+          </button>
+          <button type="button" class="btn-region" data-region="centro">
+            <strong>Centro</strong>
+            <small>Sé, República, Brás, Campos Elíseos</small>
+          </button>
+          <button type="button" class="btn-region" data-region="zona_sul">
+            <strong>Zona Sul</strong>
+            <small>Santo Amaro, Grajaú, Capão Redondo</small>
+          </button>
+          <button type="button" class="btn-region" data-region="zona_norte">
+            <strong>Zona Norte</strong>
+            <small>Santana, Tucuruvi, Brasilândia</small>
+          </button>
+          <button type="button" class="btn-region" data-region="zona_oeste">
+            <strong>Zona Oeste</strong>
+            <small>Lapa, Butantã, Pinheiros</small>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- tela 3: painel de conexao solidaria (lista por proximidade) -->
+    <section id="screen-results" class="screen" aria-labelledby="results-title" hidden>
+      <div class="nav-row">
+        <button type="button" class="btn-back" data-action="go-home">
+          <span aria-hidden="true">←</span> Trocar ajuda
+        </button>
+        <button type="button" class="btn-secondary-small" data-action="change-location">
+          <span aria-hidden="true">📍</span> Trocar local
+        </button>
+      </div>
+
+      <div class="results-header">
+        <h1 id="results-title">Locais perto de você</h1>
+        <p id="results-subtitle" class="results-subtitle">Ordenados do mais próximo ao mais distante.</p>
+      </div>
+
+      <!-- filtro simples sem digitacao -->
+      <div class="filter-bar" role="group" aria-label="Filtrar locais por horário de funcionamento">
+        <button type="button" id="filter-all" class="filter-chip active" aria-pressed="true">
+          Todos os locais
+        </button>
+        <button type="button" id="filter-open" class="filter-chip" aria-pressed="false">
+          Só abertos agora
+        </button>
+      </div>
+
+      <div id="results-count" class="results-count" aria-live="polite"></div>
+
+      <div id="results-list" class="results-list" role="list"></div>
+
+      <div id="results-empty" class="empty-state" hidden>
+        <h2>Nenhum local aberto agora nesta categoria</h2>
+        <p>Você pode tocar em <strong>"Todos os locais"</strong> acima para ver os horários de amanhã ou ligar antes de sair.</p>
+        <button type="button" id="btn-show-all-empty" class="btn-primary">Ver todos os locais</button>
+      </div>
+    </section>
+
+    <!-- tela 4: detalhes do ponto de apoio -->
+    <section id="screen-details" class="screen" aria-labelledby="detail-name" hidden>
+      <div class="nav-row">
+        <button type="button" class="btn-back" data-action="go-results">
+          <span aria-hidden="true">←</span> Voltar à lista
+        </button>
+      </div>
+
+      <article class="detail-card">
+        <div class="detail-badges">
+          <span id="detail-status-badge" class="status-badge"></span>
+          <span id="detail-type-badge" class="type-badge"></span>
+        </div>
+
+        <h1 id="detail-name" class="detail-title"></h1>
+
+        <!-- banner de prevencao de erros quando o local estiver fechado -->
+        <div id="detail-closed-warning" class="closed-warning" role="alert" hidden>
+          <strong>Atenção: este local está fechado agora.</strong>
+          <p id="detail-closed-text">Confira o horário abaixo antes de ir até lá para não perder a viagem.</p>
+        </div>
+
+        <div class="detail-distance-box">
+          <span class="distance-main" id="detail-distance"></span>
+          <span class="distance-walk" id="detail-walk"></span>
+        </div>
+
+        <!-- acoes principais de grande dimensao -->
+        <div class="primary-actions">
+          <a id="btn-call-now" href="tel:" class="btn-call btn-huge">
+            <span aria-hidden="true">📞</span>
+            <span class="btn-call-text">
+              <strong>LIGAR AGORA</strong>
+              <small id="detail-phone-display"></small>
+            </span>
+          </a>
+
+          <a id="btn-open-maps" href="#" target="_blank" rel="noopener noreferrer" class="btn-maps btn-huge">
+            <span aria-hidden="true">🗺️</span>
+            <span>VER CAMINHO A PÉ NO MAPA</span>
+          </a>
+
+          <button type="button" id="btn-read-aloud" class="btn-audio" hidden>
+            <span aria-hidden="true">🔊</span>
+            <span id="btn-read-aloud-label">Ouvir informações em voz alta</span>
+          </button>
+        </div>
+
+        <div class="info-section">
+          <h2>Endereço</h2>
+          <p id="detail-address" class="info-text"></p>
+          <p id="detail-reference" class="info-subtext"></p>
+        </div>
+
+        <div class="info-section">
+          <h2>Horário de funcionamento</h2>
+          <p id="detail-hours" class="info-text"></p>
+        </div>
+
+        <div class="info-section">
+          <h2>O que oferece</h2>
+          <ul id="detail-services" class="simple-list"></ul>
+        </div>
+
+        <div class="info-section info-docs">
+          <h2>Documentos necessários</h2>
+          <p id="detail-docs" class="info-text"></p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <!-- rodape discreto com dados academicos e simulador de horario para demonstracao -->
+  <footer class="app-footer" role="contentinfo">
+    <div class="footer-inner">
+      <p class="footer-credits">
+        <strong>Portal Conexão Solidária</strong> · ODS 01 Erradicação da Pobreza<br>
+        Projeto Semestral de IHC — Universidade Presbiteriana Mackenzie (FCI)<br>
+        Ilca Maria Pereira da Luz · Rute Willemann · Vinícius Pereira Rodrigues
+      </p>
+
+      <div class="demo-bar">
+        <label for="time-simulator">Simular horário (apresentação):</label>
+        <select id="time-simulator" aria-label="Simular horário para testes de apresentação">
+          <option value="real">Horário real do aparelho</option>
+          <option value="11">11:00 (Manhã / Almoço)</option>
+          <option value="15">15:00 (Tarde)</option>
+          <option value="21">21:00 (Noite)</option>
+        </select>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
