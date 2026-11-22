@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Portal Conexao Solidaria - Encontre alimentacao, moradia, saude, documentacao, vestuario e apoio social gratuitos perto de voce.">
+  <meta name="description" content="Portal Conexão Solidária - Encontre alimentação, moradia, saúde, documentação, vestuário e apoio social gratuitos perto de você.">
   <meta name="theme-color" content="#0f5132">
   <title>Portal Conexão Solidária</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="theme-default font-normal">
+<body class="theme-default">
   <!-- link de pulo para acessibilidade via teclado e leitores de tela -->
   <a href="#main-content" class="skip-link">Ir direto para o conteúdo principal</a>
 
-  <!-- barra superior fixa com identidade e controles de acessibilidade -->
+  <!-- barra superior fixa com identidade e controle de contraste -->
   <header class="top-bar" role="banner">
     <div class="top-bar-inner">
       <button type="button" id="btn-home-logo" class="brand-button" aria-label="Voltar para a página inicial do Portal Conexão Solidária">
@@ -21,11 +21,7 @@
         </span>
       </button>
 
-      <div class="a11y-controls" role="group" aria-label="Opções de leitura e visualização">
-        <button type="button" id="btn-font-size" class="a11y-btn" aria-pressed="false" aria-label="Aumentar tamanho das letras">
-          <span aria-hidden="true">A+</span>
-          <span class="a11y-label">Letra</span>
-        </button>
+      <div class="a11y-controls" role="group" aria-label="Opções de visualização">
         <button type="button" id="btn-contrast" class="a11y-btn" aria-label="Trocar modo de contraste da tela">
           <span aria-hidden="true">◐</span>
           <span class="a11y-label" id="contrast-label">Contraste</span>
@@ -248,6 +244,7 @@
         <div class="detail-distance-box">
           <span class="distance-main" id="detail-distance"></span>
           <span class="distance-walk" id="detail-walk"></span>
+          <small class="distance-note">Estimativa a pé · rota exata no Google Maps</small>
         </div>
 
         <!-- acoes principais de grande dimensao -->
@@ -265,10 +262,11 @@
             <span>VER CAMINHO A PÉ NO MAPA</span>
           </a>
 
-          <button type="button" id="btn-read-aloud" class="btn-audio" hidden>
+          <button type="button" id="btn-read-aloud" class="btn-audio">
             <span aria-hidden="true">🔊</span>
             <span id="btn-read-aloud-label">Ouvir informações em voz alta</span>
           </button>
+          <p id="audio-feedback" class="audio-feedback" role="status" aria-live="polite" hidden></p>
         </div>
 
         <div class="info-section">
@@ -295,23 +293,27 @@
     </section>
   </main>
 
-  <!-- rodape discreto com dados academicos e simulador de horario para demonstracao -->
+  <!-- rodape discreto com creditos e ajuste discreto de horario -->
   <footer class="app-footer" role="contentinfo">
     <div class="footer-inner">
       <p class="footer-credits">
-        <strong>Portal Conexão Solidária</strong> · ODS 01 Erradicação da Pobreza<br>
-        Projeto Semestral de IHC — Universidade Presbiteriana Mackenzie (FCI)<br>
+        Portal Conexão Solidária · Universidade Presbiteriana Mackenzie (FCI)<br>
         Ilca Maria Pereira da Luz · Rute Willemann · Vinícius Pereira Rodrigues
       </p>
 
-      <div class="demo-bar">
-        <label for="time-simulator">Simular horário (apresentação):</label>
-        <select id="time-simulator" aria-label="Simular horário para testes de apresentação">
-          <option value="real">Horário real do aparelho</option>
-          <option value="11">11:00 (Manhã / Almoço)</option>
-          <option value="15">15:00 (Tarde)</option>
-          <option value="21">21:00 (Noite)</option>
-        </select>
+      <div class="time-control-inline" aria-label="Ajustar horário de consulta">
+        <label for="custom-time-input">Horário:</label>
+        <input
+          type="text"
+          id="custom-time-input"
+          class="time-input-discrete"
+          inputmode="numeric"
+          maxlength="5"
+          placeholder="HH:MM"
+          aria-label="Digite um horário válido de 00:00 a 23:59"
+        >
+        <button type="button" id="btn-reset-time" class="time-reset-btn" title="Voltar para o horário atual">Atual</button>
+        <span id="time-status-hint" class="time-status-hint">Agora</span>
       </div>
     </div>
   </footer>
