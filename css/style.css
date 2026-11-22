@@ -910,32 +910,101 @@ body.theme-yellow .btn-maps {
   }
 }
 
-.brand-button {
-  padding: 2px;
-  min-height: 46px;
-  max-width: calc(100% - 135px);
+
+/* --- melhorias visuais de rodape, horario discreto, distancia e audio --- */
+.distance-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
-.brand-logo-wrap {
+.audio-feedback {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: var(--bg-muted);
+  color: var(--text-secondary);
+}
+
+.audio-feedback.is-error {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1.5px solid var(--warning-border);
+}
+
+.app-footer {
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  padding: 14px 14px 20px;
+}
+
+.footer-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-credits {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.time-control-inline {
   display: inline-flex;
   align-items: center;
-  background-color: #ffffff;
-  padding: 4px 8px;
-  border-radius: 10px;
-  max-width: 100%;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
 }
 
-.brand-logo-img {
-  display: block;
-  height: 36px;
-  max-width: 190px;
-  width: auto;
-  object-fit: contain;
+.time-control-inline label {
+  font-weight: 600;
 }
 
-@media (max-width: 390px) {
-  .brand-logo-img {
-    height: 30px;
-    max-width: 155px;
-  }
+.time-input-discrete {
+  width: 66px;
+  min-height: 30px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-input-discrete.is-invalid {
+  border-color: var(--status-closed-border);
+  background-color: var(--status-closed-bg);
+  color: var(--status-closed-text);
+}
+
+.time-reset-btn {
+  min-height: 30px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.time-reset-btn:hover {
+  color: var(--text-main);
+  border-color: var(--text-secondary);
+}
+
+.time-status-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
 }
