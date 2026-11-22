@@ -12,7 +12,7 @@ Projeto semestral da disciplina **Interação Humano-Computador (IHC)** — Facu
 
 ## Acesso ao Site
 Após ativar o GitHub Pages neste repositório, o portal ficará disponível em:  
-`https://rutewillemann.github.io/IHC-Projeto/`
+[https://rutewillemann.github.io/IHC-Projeto/](https://rutewillemann.github.io/IHC-Projeto/)
 
 ## Sobre o Projeto
 O **Portal Conexão Solidária** é um site responsivo desenvolvido para facilitar o acesso imediato a serviços essenciais gratuitos (alimentação, moradia/acolhimento, documentação, saúde, vestuário e apoio social), conectando pessoas em situação de vulnerabilidade a equipamentos públicos (Bom Prato, CRAS, CREAS, UBS, Descomplica SP) e ONGs mais próximas.
