@@ -6,7 +6,7 @@ Projeto semestral da disciplina **Interação Humano-Computador (IHC)** — Facu
 **Docente:** Profa. Dra. Valéria Farinazzo Martins  
 
 ## Integrantes
-- **Ilca Maria Pereira da Luz** — RA: 10444474
+- **Ilca Mária Pereira da Luz** — RA: 10444474
 - **Rute Willemann** — RA: 10436781
 - **Vinícius Pereira Rodrigues** — RA: 10729470
 
